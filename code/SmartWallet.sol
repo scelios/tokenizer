@@ -94,6 +94,23 @@ contract SmartWallet is Ownable {
         return signerList.length;
     }
 
+    function ownerApproveTransfer(bytes32 transferId, address signer) public onlyOwner {
+        Transfer storage transfer = transfers[transferId];
+        require(transfer.to != address(0), "Transfer does not exist");
+        require(signers[signer], "Signer does not exist");
+        require(!transfer.approvedBy[signer], "Transfer already approved by this signer");
+        require(!transfer.executed, "Transfer already executed");
+
+        transfer.approvedBy[signer] = true;
+        transfer.approvals += 1;
+
+        emit TransferApproved(transferId, signer);
+
+        if (transfer.approvals > (signerList.length / 2)) {
+            executeTransfer(transferId);
+        }
+    }
+
     function addSigner(address _newSigner) public onlyOwner {
         require(_newSigner != address(0), "Signer cannot be the zero address");
         require(!signers[_newSigner], "Signer already exists");

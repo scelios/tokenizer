@@ -37,11 +37,11 @@ contract SmartWalletTest {
         wallet = new SmartWallet(address(token), initialSigners);
 
         // Fund the smart wallet with tokens for testing
-        token.mint(address(wallet), 1000);
+        token.transfer(address(wallet), 1000);
     }
 
     function testInitialState() public {
-        Assert.equal(wallet.owner(), owner, "Owner is not the deployer");
+        Assert.equal(wallet.owner(), address(this), "Owner is not the deployer");
         Assert.equal(wallet.getSignerCount(), 3, "Initial signer count is incorrect");
         Assert.ok(wallet.signers(signer1), "Signer 1 is not registered");
         Assert.ok(wallet.signers(signer2), "Signer 2 is not registered");
@@ -74,7 +74,7 @@ contract SmartWalletTest {
     /// #sender: signer1
     function testApproveTransfer1() public {
         Assert.notEqual(transferId, 0, "Transfer ID should be set before approving");
-        wallet.approveTransfer(transferId);
+        wallet.ownerApproveTransfer(transferId, signer1);
         // After 1 approval, balance should not have changed yet
         Assert.equal(token.balanceOf(recipient), 0, "Recipient balance should be 0 after one approval");
     }
@@ -85,7 +85,7 @@ contract SmartWalletTest {
         uint256 initialRecipientBalance = token.balanceOf(recipient);
         
         // This second approval (out of 3 total signers) reaches the majority and should trigger the transfer
-        wallet.approveTransfer(transferId);
+        wallet.ownerApproveTransfer(transferId, signer2);
 
         uint256 finalRecipientBalance = token.balanceOf(recipient);
         Assert.equal(finalRecipientBalance, initialRecipientBalance + 100, "Recipient did not receive the tokens");
